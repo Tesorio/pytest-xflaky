@@ -127,7 +127,7 @@ class FlakyTestFinder:
 
 
 def pytest_configure(config):
-    if config.option.xflaky:
+    if not config.option.xflaky:
         return
 
     plugin = Plugin(config)
