@@ -55,7 +55,7 @@ class Plugin:
         except FileExistsError:
             pass
 
-    @pytest.hookimpl(tryfirst=True)
+    @pytest.hookimpl(trylast=True)
     def pytest_sessionfinish(self, session):
         report_file = self.config.option.json_report_file
         directory = self.config.option.xflaky_reports_directory
