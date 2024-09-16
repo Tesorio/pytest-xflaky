@@ -145,7 +145,7 @@ def pytest_addoption(parser):
         help="Directory to store json reports",
     )
     group.addoption(
-        "--xflaky_report",
+        "--xflaky-report",
         default=False,
         action="store_true",
         help="Find flaky tests",
