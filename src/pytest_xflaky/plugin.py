@@ -128,7 +128,8 @@ class FlakyTestFinder:
 
 def pytest_configure(config):
     plugin = Plugin(config)
-    config.pluginmanager.register(plugin)
+    if config.option.xflaky:
+        config.pluginmanager.register(plugin)
 
 
 def pytest_addoption(parser):

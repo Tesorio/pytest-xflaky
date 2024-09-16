@@ -29,7 +29,9 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = ["pytest>=8.2.1", "pytest-json-report"]
+
 [project.urls]
 Repository = "https://github.com/Tesorio/pytest-xflaky"
+
 [project.entry-points.pytest11]
 xflaky = "pytest_xflaky.plugin"
