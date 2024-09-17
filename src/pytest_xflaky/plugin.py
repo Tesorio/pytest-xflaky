@@ -91,15 +91,14 @@ class Plugin:
         print("FAILED TESTS:")
         self.flaky_report = []
         failed_tests = [test for test in tests if test.failed > 0]
-        sorted_tests = sorted(failed_tests, key=lambda t: t.is_flaky())
-        for maybe_flaky_test in sorted_tests:
+        for maybe_flaky_test in failed_tests:
             label = " FLAKY" if maybe_flaky_test.is_flaky() else ""
             print(
-                f"{maybe_flaky_test.test} (ok: {maybe_flaky_test.ok}, failed: {maybe_flaky_test.failed}){label}"
+                f"{maybe_flaky_test.test} (failed: {maybe_flaky_test.failed}/{maybe_flaky_test.ok + maybe_flaky_test.failed}){label}"
             )
 
-        failures = len(failed_tests)
-        succeeds = len(tests) - failures
+        failures = sum(test.failed for test in tests)
+        succeeds = sum(test.ok for test in tests)
         runs = failures + succeeds
 
         print("-")
