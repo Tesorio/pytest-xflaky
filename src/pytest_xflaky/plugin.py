@@ -62,12 +62,12 @@ class TextFileReportWriter:
             )
 
         failures = sum(test.failed for test in tests)
-        succeses = sum(test.ok for test in tests)
-        runs = failures + succeses
+        successes = sum(test.ok for test in tests)
+        runs = failures + successes
 
         self._print("-")
         self._print(
-            f"Flaky tests result (tests: {len(tests)}, runs: {runs}, succeses: {succeses}, failures: {failures}, flaky: {flaky})",
+            f"Flaky tests result (tests: {len(tests)}, runs: {runs}, successes: {successes}, failures: {failures}, flaky: {flaky})",
         )
 
 
@@ -121,7 +121,7 @@ class Plugin:
         finder = FlakyTestFinder(
             directory=self.config.option.xflaky_reports_directory,
             min_failures=self.config.option.xflaky_min_failures,
-            min_successes=self.config.option.xflaky_min_succeses,
+            min_successes=self.config.option.xflaky_min_successes,
         )
 
         tests, flaky = finder.run()
