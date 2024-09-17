@@ -28,7 +28,12 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
   "License :: OSI Approved :: MIT License",
 ]
-dependencies = ["pytest>=8.2.1", "pytest-json-report"]
+dependencies = [
+  "pytest-json-report",
+  "pytest>=8.2.1",
+  "tree-sitter",
+  "tree-sitter-python",
+]
 
 [project.urls]
 Repository = "https://github.com/Tesorio/pytest-xflaky"

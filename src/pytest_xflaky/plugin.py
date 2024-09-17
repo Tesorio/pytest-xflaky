@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 from pytest_jsonreport.plugin import pytest_configure as jsonreport_pytest_configure
+from pytest_xflaky.add_decorator import add_decorators
 
 
 @dataclass
@@ -77,7 +78,18 @@ class Plugin:
 
         if self.config.option.xflaky_report:
             report_writer = TextFileReportWriter(self.config)
-            self.generate_report(report_writer)
+
+            if self.generate_report(report_writer):
+                if not self.config.option.xflaky_fix:
+                    pytest.exit("Flaky tests were found", returncode=1)
+
+                else:
+                    add_decorators(config.option.xflaky_final_report_file)
+                    pytest.exit("Fixers applied", returncode=0)
+
+            else:
+                pytest.exit("No flaky tests found", returncode=0)
+
         else:
             self.check_jsonreport()
 
@@ -115,10 +127,7 @@ class Plugin:
         report_writer.write(tests, flaky)
         report_writer.close()
 
-        if flaky > 0:
-            pytest.exit("Flaky tests were found", returncode=1)
-        else:
-            pytest.exit("No flaky tests found", returncode=0)
+        return flaky > 0
 
     def pytest_terminal_summary(self, terminalreporter):
         terminalreporter.write_sep("-", "XFLAKY report")
@@ -196,6 +205,12 @@ def pytest_addoption(parser):
         default=False,
         action="store_true",
         help="Find flaky tests",
+    )
+    group.addoption(
+        "--xflaky-fix",
+        default=False,
+        action="store_true",
+        help="Apply fixes",
     )
     group.addoption(
         "--xflaky-min-failures",
