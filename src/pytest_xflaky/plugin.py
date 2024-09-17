@@ -216,4 +216,5 @@ def pytest_addoption(parser):
         "--xflaky-min-failures",
         default=1,
         help="Minimum number of failures to consider a test flaky",
+        type=int,
     )
