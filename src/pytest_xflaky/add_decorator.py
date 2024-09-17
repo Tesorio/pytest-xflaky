@@ -40,7 +40,7 @@ def add_decorator_to_function(path, function_name):
 
         elif node.type == "class_definition":
             last_class_name = node.child_by_field_name("name").text.decode()
-            decorators = []
+            decorators = set()
 
         elif (
             node.type == "function_definition"
@@ -48,7 +48,7 @@ def add_decorator_to_function(path, function_name):
         ):
             if last_class_name == class_name:
                 return node, decorators
-            decorators = []
+            decorators = set()
 
         for child in node.children:
             if node := traverse(child):
