@@ -42,12 +42,10 @@ def add_decorator_to_function(path, function_name):
             last_class_name = node.child_by_field_name("name").text.decode()
             decorators = set()
 
-        elif (
-            node.type == "function_definition"
-            and node.child_by_field_name("name").text.decode() == function_name
-        ):
-            if last_class_name == class_name:
-                return node, decorators
+        elif node.type == "function_definition":
+            if node.child_by_field_name("name").text.decode() == function_name:
+                if last_class_name == class_name:
+                    return node, decorators
             decorators = set()
 
         for child in node.children:
