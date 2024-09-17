@@ -73,11 +73,9 @@ class Plugin:
         flaky_tests, total_tests = finder.run()
         if flaky_tests:
             self.print_report(flaky_tests)
-            pytest.exit(
-                f"Flaky tests found: {flaky_tests}/{total_tests}", return_code=1
-            )
+            pytest.exit(f"Flaky tests found: {flaky_tests}/{total_tests}", returncode=1)
 
-        pytest.exit("No flaky tests found", return_code=0)
+        pytest.exit("No flaky tests found", returncode=0)
 
     def print_report(self, flaky_tests):
         for flaky_test in flaky_tests:
