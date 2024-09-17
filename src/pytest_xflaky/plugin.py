@@ -72,9 +72,8 @@ class Plugin:
         if flaky_tests:
             self.print_report(flaky_tests)
             pytest.exit(1)
-        else:
-            print("No flaky tests found")
-            pytest.exit(0)
+
+        print("No flaky tests found")
 
     def print_report(self, flaky_tests):
         for flaky_test in flaky_tests:
