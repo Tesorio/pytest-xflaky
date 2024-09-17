@@ -59,11 +59,6 @@ def add_decorator_to_function(path, function_name):
     else:
         return None
 
-    # add import pytest
-    if not is_pytest_imported:
-        import_statement = "import pytest\n"
-        source_code = import_statement + source_code
-
     # skip if decorator already added
     if not any(d.startswith(b"@pytest.mark.xfail") for d in decorators):
         # Add the decorator before the function definition
@@ -74,6 +69,11 @@ def add_decorator_to_function(path, function_name):
             + f"@pytest.mark.xfail(strict=False)\n{indent}"
             + source_code[function_start_byte:]
         )
+
+    # add import pytest
+    if not is_pytest_imported:
+        import_statement = "import pytest\n"
+        source_code = import_statement + source_code
 
     with open(path, "w") as fp:
         fp.write(source_code)
