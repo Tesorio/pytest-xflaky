@@ -42,6 +42,10 @@ class Plugin:
         if self.config.option.xflaky_report:
             self.generate_report()
 
+        report_file = self.config.option.json_report_file
+        directory = self.config.option.xflaky_reports_directory
+        self.new_report_file = f"{uuid.uuid4()}-{os.path.basename(report_file)}"
+
     def check_jsonreport(self):
         if not self.config.pluginmanager.hasplugin("pytest_jsonreport"):
             jsonreport_pytest_configure(self.config)
@@ -58,9 +62,7 @@ class Plugin:
     @pytest.hookimpl(trylast=True)
     def pytest_sessionfinish(self, session):
         report_file = self.config.option.json_report_file
-        directory = self.config.option.xflaky_reports_directory
-        name = f"{uuid.uuid4()}-{os.path.basename(report_file)}"
-        shutil.copy(report_file, f"{directory}/{name}")
+        shutil.copy(report_file, self.new_report_file)
 
     def generate_report(self):
         finder = FlakyTestFinder(
@@ -80,6 +82,10 @@ class Plugin:
             print(
                 f"Flaky test found: {flaky_test.test} (ok: {flaky_test.ok}, failed: {flaky_test.failed}"
             )
+
+    def pytest_terminal_summary(self, terminalreporter):
+        terminalreporter.write_sep("-", "XFLAKY report")
+        terminalreporter.write_line(f"Report file copied to {self.new_report_file}")
 
 
 class FlakyTestFinder:
