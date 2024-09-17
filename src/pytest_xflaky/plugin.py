@@ -70,12 +70,14 @@ class Plugin:
             min_failures=self.config.option.xflaky_min_failures,
         )
 
-        flaky_tests = finder.run()
+        flaky_tests, total_tests = finder.run()
         if flaky_tests:
             self.print_report(flaky_tests)
-            pytest.exit(1)
+            pytest.exit(
+                f"Flaky tests found: {flaky_tests}/{total_tests}", return_code=1
+            )
 
-        print("No flaky tests found")
+        pytest.exit("No flaky tests found", return_code=0)
 
     def print_report(self, flaky_tests):
         for flaky_test in flaky_tests:
@@ -96,7 +98,9 @@ class FlakyTestFinder:
     def run(self) -> list[FlakyTest]:
         ok = {}
         failures = {}
+        total = 0
         for test, failure in self.collect_tests():
+            total += 1
             if failure:
                 failures.setdefault(test, 0)
                 failures[test] += 1
@@ -113,7 +117,7 @@ class FlakyTestFinder:
                         FlakyTest(test=test, ok=ok_, failed=failures[test])
                     )
 
-        return flaky_tests
+        return flaky_tests, total
 
     def collect_tests(self):
         for f in os.listdir(self.directory):
