@@ -33,9 +33,10 @@ class MaybeFlakyTest:
     ok: int
     failed: int
     min_failures: bool
+    min_successes: bool
 
     def is_flaky(self):
-        return self.ok > 0 and self.failed >= self.min_failures
+        return self.ok >= self.min_successes and self.failed >= self.min_failures
 
 
 class TextFileReportWriter:
@@ -61,12 +62,12 @@ class TextFileReportWriter:
             )
 
         failures = sum(test.failed for test in tests)
-        succeeds = sum(test.ok for test in tests)
-        runs = failures + succeeds
+        succeses = sum(test.ok for test in tests)
+        runs = failures + succeses
 
         self._print("-")
         self._print(
-            f"Flaky tests result (tests: {len(tests)}, runs: {runs}, succeeds: {succeeds}, failures: {failures}, flaky: {flaky})",
+            f"Flaky tests result (tests: {len(tests)}, runs: {runs}, succeses: {succeses}, failures: {failures}, flaky: {flaky})",
         )
 
 
@@ -120,6 +121,7 @@ class Plugin:
         finder = FlakyTestFinder(
             directory=self.config.option.xflaky_reports_directory,
             min_failures=self.config.option.xflaky_min_failures,
+            min_successes=self.config.option.xflaky_min_succeses,
         )
 
         tests, flaky = finder.run()
@@ -216,5 +218,11 @@ def pytest_addoption(parser):
         "--xflaky-min-failures",
         default=1,
         help="Minimum number of failures to consider a test flaky",
+        type=int,
+    )
+    group.addoption(
+        "--xflaky-min-succeses",
+        default=1,
+        help="Minimum number of successes to consider a test flaky",
         type=int,
     )
