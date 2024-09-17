@@ -137,9 +137,10 @@ class Plugin:
 
 
 class FlakyTestFinder:
-    def __init__(self, *, directory: str, min_failures: int):
+    def __init__(self, *, directory: str, min_failures: int, min_successes: int):
         self.directory = directory
         self.min_failures = min_failures
+        self.min_successes = min_successes
 
     def run(self) -> list[MaybeFlakyTest]:
         cache = {}
@@ -147,7 +148,11 @@ class FlakyTestFinder:
             cache.setdefault(
                 test,
                 MaybeFlakyTest(
-                    test=test, ok=0, failed=0, min_failures=self.min_failures
+                    test=test,
+                    ok=0,
+                    failed=0,
+                    min_failures=self.min_failures,
+                    min_successes=self.min_successes,
                 ),
             )
 
