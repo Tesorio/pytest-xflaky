@@ -37,15 +37,47 @@ class MaybeFlakyTest:
         return self.ok > 0 and self.failed >= self.min_failures
 
 
+class TextFileReportWriter:
+    def __init__(self, config):
+        self.final_report_file = config.option.xflaky_final_report_file
+        self.fp = open(self.final_report_file, "w")
+
+    def close(self):
+        self.fp.close()
+
+    def _print(self, line):
+        line = f"{line}\n"
+        sys.stdout.write(line)
+        self.fp.write(line)
+
+    def write(self, tests: list[MaybeFlakyTest], flaky: int):
+        self._print("FAILED TESTS:")
+        failed_tests = [test for test in tests if test.failed > 0]
+        for maybe_flaky_test in failed_tests:
+            label = " FLAKY" if maybe_flaky_test.is_flaky() else ""
+            self._print(
+                f"{maybe_flaky_test.test} (failed: {maybe_flaky_test.failed}/{maybe_flaky_test.ok + maybe_flaky_test.failed}){label}"
+            )
+
+        failures = sum(test.failed for test in tests)
+        succeeds = sum(test.ok for test in tests)
+        runs = failures + succeeds
+
+        self._print("-")
+        self._print(
+            f"Flaky tests result (tests: {len(tests)}, runs: {runs}, succeeds: {succeeds}, failures: {failures}, flaky: {flaky})",
+        )
+
+
 class Plugin:
     def __init__(self, config):
         self.config = config
-        self.flaky_report = None
 
         self.make_reports_dir()
 
         if self.config.option.xflaky_report:
-            self.generate_report()
+            report_writer = TextFileReportWriter(self.config)
+            self.generate_report(report_writer)
         else:
             self.check_jsonreport()
 
@@ -72,7 +104,7 @@ class Plugin:
         report_file = self.config.option.json_report_file
         shutil.copy(report_file, self.new_report_file)
 
-    def generate_report(self):
+    def generate_report(self, report_writer):
         finder = FlakyTestFinder(
             directory=self.config.option.xflaky_reports_directory,
             min_failures=self.config.option.xflaky_min_failures,
@@ -80,31 +112,13 @@ class Plugin:
 
         tests, flaky = finder.run()
 
-        self.print_report(tests, flaky)
+        report_writer.write(tests, flaky)
+        report_writer.close()
 
         if flaky > 0:
             pytest.exit("Flaky tests were found", returncode=1)
         else:
             pytest.exit("No flaky tests found", returncode=0)
-
-    def print_report(self, tests: list[MaybeFlakyTest], flaky: int):
-        print("FAILED TESTS:")
-        self.flaky_report = []
-        failed_tests = [test for test in tests if test.failed > 0]
-        for maybe_flaky_test in failed_tests:
-            label = " FLAKY" if maybe_flaky_test.is_flaky() else ""
-            print(
-                f"{maybe_flaky_test.test} (failed: {maybe_flaky_test.failed}/{maybe_flaky_test.ok + maybe_flaky_test.failed}){label}"
-            )
-
-        failures = sum(test.failed for test in tests)
-        succeeds = sum(test.ok for test in tests)
-        runs = failures + succeeds
-
-        print("-")
-        print(
-            f"Flaky tests result (tests: {len(tests)}, runs: {runs}, succeeds: {succeeds}, failures: {failures}, flaky: {flaky})",
-        )
 
     def pytest_terminal_summary(self, terminalreporter):
         terminalreporter.write_sep("-", "XFLAKY report")
@@ -166,6 +180,11 @@ def pytest_addoption(parser):
         default=False,
         action="store_true",
         help="Enable xflaky",
+    )
+    group.addoption(
+        "--xflaky-final-report-file",
+        default=".xflaky_report.txt",
+        help="File to store final report",
     )
     group.addoption(
         "--xflaky-reports-directory",
