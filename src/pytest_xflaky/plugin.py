@@ -221,7 +221,7 @@ def pytest_addoption(parser):
         type=int,
     )
     group.addoption(
-        "--xflaky-min-succeses",
+        "--xflaky-min-successes",
         default=1,
         help="Minimum number of successes to consider a test flaky",
         type=int,
