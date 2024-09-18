@@ -4,12 +4,14 @@ import os
 import shutil
 import sys
 import uuid
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import pytest
 from pytest_jsonreport.plugin import pytest_configure as jsonreport_pytest_configure
 from pytest_xflaky.add_decorator import add_decorators
+
+from .github_blame import GithubBlame
 
 
 class XflakyAction(enum.Enum):
@@ -31,6 +33,10 @@ class Test:
 
     def __eq__(self, other):
         return other.nodeid == self.nodeid and other.lineno == self.lineno
+
+    def get_filename(self):
+        if "::" in self.nodeid:
+            return self.nodeid.split("::")[0]
 
 
 @dataclass
@@ -77,6 +83,40 @@ class TextFileReportWriter:
         )
 
 
+class GitHubReportWriter:
+    def __init__(self, config):
+        self.config = config
+
+    def write(self, tests: list[MaybeFlakyTest], flaky: int):
+        token = self.config.option.xflaky_github_token
+        if not token:
+            token = os.getenv("GITHUB_TOKEN")
+
+        failed_tests = [test for test in tests if test.failed > 0]
+        github_blame = GithubBlame(token)
+
+        report = {}
+        for maybe_flaky_test in failed_tests:
+            data = asdict(maybe_flaky_test)
+            data["is_flaky"] = maybe_flaky_test.is_flaky()
+            if data["is_flaky"]:
+                filename = maybe_flaky_test.test.get_filename()
+                lineno = maybe_flaky_test.test.lineno
+                data["blame"] = github_blame.blame(filename, lineno)
+                if data["blame"]:
+                    report_key = data["blame"]["github_username"]
+                else:
+                    report_key = None
+
+                report.setdefault(report_key, []).append(data)
+
+        with open(self.config.option.xflaky_github_report_file, "w") as fp:
+            json.dump(report, fp)
+
+    def close(self):
+        pass
+
+
 class Plugin:
     def __init__(self, config, action: XflakyAction):
         self.config = config
@@ -109,7 +149,13 @@ class Plugin:
         )
 
         tests, flaky = finder.run()
-        report_writers = [TextFileReportWriter(self.config)]
+
+        report_writers = [
+            TextFileReportWriter(self.config),
+        ]
+
+        if self.config.option.xflaky_github_report:
+            report_writers.append(GitHubReportWriter(self.config))
 
         for report_writer in report_writers:
             report_writer.write(tests, flaky)
@@ -241,6 +287,22 @@ def pytest_addoption(parser):
         "--xflaky-text-report-file",
         default=".xflaky_report.txt",
         help="File to store text report",
+    )
+    group.addoption(
+        "--xflaky-github-report",
+        default=False,
+        action="store_true",
+        help="Generate GitHub report",
+    )
+    group.addoption(
+        "--xflaky-github-token",
+        default="",
+        help="GitHub token to use for API requests (defaults to GITHUB_TOKEN)",
+    )
+    group.addoption(
+        "--xflaky-github-report-file",
+        default=".xflaky_report_github.json",
+        help="File to store GitHub report",
     )
     group.addoption(
         "--xflaky-reports-directory",
