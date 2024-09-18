@@ -102,12 +102,23 @@ class Plugin:
         self.new_report_file = str(directory / filename)
 
     def action_report(self):
-        report_writer = TextFileReportWriter(self.config)
+        finder = FlakyTestFinder(
+            directory=self.config.option.xflaky_reports_directory,
+            min_failures=self.config.option.xflaky_min_failures,
+            min_successes=self.config.option.xflaky_min_successes,
+        )
 
-        if self.generate_report(report_writer):
+        tests, flaky = finder.run()
+        report_writers = [TextFileReportWriter(self.config)]
+
+        for report_writer in report_writers:
+            report_writer.write(tests, flaky)
+            report_writer.close()
+
+        if flaky > 0:
             pytest.exit("Flaky tests were found", returncode=1)
-
-        pytest.exit("No flaky tests found", returncode=0)
+        else:
+            pytest.exit("No flaky tests found", returncode=0)
 
     def action_fix(self):
         add_decorators(self.config.option.xflaky_final_report_file)
@@ -131,20 +142,6 @@ class Plugin:
     def pytest_sessionfinish(self, session):
         report_file = self.config.option.json_report_file
         shutil.copy(report_file, self.new_report_file)
-
-    def generate_report(self, report_writer):
-        finder = FlakyTestFinder(
-            directory=self.config.option.xflaky_reports_directory,
-            min_failures=self.config.option.xflaky_min_failures,
-            min_successes=self.config.option.xflaky_min_successes,
-        )
-
-        tests, flaky = finder.run()
-
-        report_writer.write(tests, flaky)
-        report_writer.close()
-
-        return flaky > 0
 
     def pytest_terminal_summary(self, terminalreporter):
         terminalreporter.write_sep("-", "XFLAKY report")
