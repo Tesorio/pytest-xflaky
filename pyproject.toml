@@ -33,6 +33,7 @@ dependencies = [
   "pytest>=8.2.1",
   "tree-sitter",
   "tree-sitter-python",
+  "requests",
 ]
 
 [project.urls]
