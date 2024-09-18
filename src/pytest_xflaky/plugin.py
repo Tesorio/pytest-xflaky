@@ -47,8 +47,8 @@ class MaybeFlakyTest:
 
 class TextFileReportWriter:
     def __init__(self, config):
-        self.final_report_file = config.option.xflaky_final_report_file
-        self.fp = open(self.final_report_file, "w")
+        self.text_report_file = config.option.xflaky_text_report_file
+        self.fp = open(self.text_report_file, "w")
 
     def close(self):
         self.fp.close()
@@ -121,7 +121,7 @@ class Plugin:
             pytest.exit("No flaky tests found", returncode=0)
 
     def action_fix(self):
-        add_decorators(self.config.option.xflaky_final_report_file)
+        add_decorators(self.config.option.xflaky_text_report_file)
 
         pytest.exit("Fixers applied", returncode=0)
 
@@ -238,9 +238,9 @@ def pytest_addoption(parser):
         help="Collect flaky tests",
     )
     group.addoption(
-        "--xflaky-final-report-file",
+        "--xflaky-text-report-file",
         default=".xflaky_report.txt",
-        help="File to store final report",
+        help="File to store text report",
     )
     group.addoption(
         "--xflaky-reports-directory",
