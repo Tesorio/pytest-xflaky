@@ -1,4 +1,4 @@
-import collections
+import enum
 import json
 import os
 import shutil
@@ -10,6 +10,12 @@ from pathlib import Path
 import pytest
 from pytest_jsonreport.plugin import pytest_configure as jsonreport_pytest_configure
 from pytest_xflaky.add_decorator import add_decorators
+
+
+class XflakyAction(enum.Enum):
+    COLLECT = "collect"
+    FIX = "fix"
+    REPORT = "report"
 
 
 @dataclass
@@ -72,32 +78,41 @@ class TextFileReportWriter:
 
 
 class Plugin:
-    def __init__(self, config):
+    def __init__(self, config, action: XflakyAction):
         self.config = config
+        self.action = action
 
+        match action:
+            case XflakyAction.COLLECT:
+                self.action_collect()
+            case XflakyAction.REPORT:
+                self.action_report()
+            case XflakyAction.FIX:
+                self.action_fix()
+            case _:
+                raise NotImplementedError(action)
+
+    def action_collect(self):
+        self.check_jsonreport()
         self.make_reports_dir()
-
-        if self.config.option.xflaky_report:
-            report_writer = TextFileReportWriter(self.config)
-
-            if self.generate_report(report_writer):
-                if not self.config.option.xflaky_fix:
-                    pytest.exit("Flaky tests were found", returncode=1)
-
-                else:
-                    add_decorators(config.option.xflaky_final_report_file)
-                    pytest.exit("Fixers applied", returncode=0)
-
-            else:
-                pytest.exit("No flaky tests found", returncode=0)
-
-        else:
-            self.check_jsonreport()
 
         report_file = self.config.option.json_report_file
         directory = Path(self.config.option.xflaky_reports_directory)
         filename = f"{uuid.uuid4()}-{os.path.basename(report_file)}"
         self.new_report_file = str(directory / filename)
+
+    def action_report(self):
+        report_writer = TextFileReportWriter(self.config)
+
+        if self.generate_report(report_writer):
+            pytest.exit("Flaky tests were found", returncode=1)
+
+        pytest.exit("No flaky tests found", returncode=0)
+
+    def action_fix(self):
+        add_decorators(self.config.option.xflaky_final_report_file)
+
+        pytest.exit("Fixers applied", returncode=0)
 
     def check_jsonreport(self):
         if not self.config.pluginmanager.hasplugin("pytest_jsonreport"):
@@ -181,21 +196,49 @@ class FlakyTestFinder:
                 )
 
 
+def xflaky_action_from_config(config) -> XflakyAction:
+    action = None
+
+    if config.option.xflaky_report:
+        action = XflakyAction.REPORT
+
+    if config.option.xflaky_fix:
+        if action:
+            pytest.exit(
+                "Cannot use more than one xflaky action at a time, found: --xflaky-report and --xflaky-fix",
+                returncode=1,
+            )
+
+        action = XflakyAction.FIX
+
+    if config.option.xflaky_collect:
+        if action:
+            pytest.exit(
+                "Cannot use more than one xflaky action at a time, found: --xflaky and --xflaky-report",
+                returncode=1,
+            )
+
+        action = XflakyAction.COLLECT
+
+    return action
+
+
 def pytest_configure(config):
-    if not config.option.xflaky:
+    action = xflaky_action_from_config(config)
+    if not action:
         return
 
-    plugin = Plugin(config)
+    plugin = Plugin(config, action)
     config.pluginmanager.register(plugin)
 
 
 def pytest_addoption(parser):
     group = parser.getgroup("xflaky")
     group.addoption(
-        "--xflaky",
+        "--xflaky-collect",
         default=False,
         action="store_true",
-        help="Enable xflaky",
+        help="Collect flaky tests",
     )
     group.addoption(
         "--xflaky-final-report-file",
@@ -211,13 +254,13 @@ def pytest_addoption(parser):
         "--xflaky-report",
         default=False,
         action="store_true",
-        help="Find flaky tests",
+        help="Generate xflaky report",
     )
     group.addoption(
         "--xflaky-fix",
         default=False,
         action="store_true",
-        help="Apply fixes",
+        help="Fix flaky tests",
     )
     group.addoption(
         "--xflaky-min-failures",
