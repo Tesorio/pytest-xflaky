@@ -12,7 +12,7 @@ class GithubBlame:
         if repository := get_github_repository():
             self.org, self.repository = repository
         else:
-            self.org, self.repository = None
+            self.org, self.repository = None, None
 
     def blame(self, filename, lineno):
         blame_output = get_blame_output(filename)
