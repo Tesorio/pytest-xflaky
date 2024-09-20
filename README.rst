@@ -35,7 +35,7 @@ Nevertheless, some situations may slip through the cracks, as it's not always ob
 What is xflaky?
 ---------------
 
-`pytest-xflaky <https://github.com/Tesorio/pytest-xflaky>`_ is a flaky-hunter pytest plugin that collect reports and automatically submit PRs to put flaky tests under quarantine.
+`pytest-xflaky <https://github.com/Tesorio/pytest-xflaky>`_ is a flaky-test hunter pytest plugin that collect reports and automatically submit PRs to put flaky tests under quarantine.
 
 Features
 --------
