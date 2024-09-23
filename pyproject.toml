@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pytest-xflaky"
 description = "A simple plugin to use with pytest"
-version = "0.1.0"
+version = "1.0.0"
 readme = "README.rst"
 requires-python = ">=3.10"
 authors = [{ name = "Tesorio", email = "caio@tesorio.com" }]
