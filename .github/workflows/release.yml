@@ -53,4 +53,5 @@ jobs:
             semantic-release ${{ github.event_name == 'pull_request' && '--dry-run' || '' }}
 
       - name: Publish release distributions to PyPI
+        if: ${{ github.event_name == 'pull_request' }}
         uses: pypa/gh-action-pypi-publish@release/v1
