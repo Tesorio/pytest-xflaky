@@ -31,4 +31,4 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx -p semantic-release@latest -p semantic-release-pypi@latest -p semantic-release-git@latest semantic-release ${{ github.event_name == 'pull_request' && '--dry-run' }}
+        run: npx -p semantic-release@latest -p semantic-release-pypi@latest semantic-release ${{ github.event_name == 'pull_request' && '--dry-run' }}
