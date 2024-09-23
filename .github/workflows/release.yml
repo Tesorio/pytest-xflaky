@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read # for checkout
+  id-token: write # for oidc
 
 jobs:
   release:
