@@ -34,7 +34,7 @@ jobs:
         run: |
           npx \
             -p semantic-release \
-            -p semantic-release-pypi
+            -p semantic-release-pypi \
             -p @semantic-release/git \
             -p @semantic-release/changelog \
             semantic-release ${{ github.event_name == 'pull_request' && '--dry-run' }}
