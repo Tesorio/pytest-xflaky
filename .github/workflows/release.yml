@@ -8,30 +8,39 @@ on:
       - main
 
 permissions:
-  contents: write
-  id-token: write # for oidc
+  contents: read
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+
     permissions:
       contents: write # to be able to publish a GitHub release
       issues: write # to be able to comment on released issues
       pull-requests: write # to be able to comment on released pull requests
       id-token: write # to enable use of OIDC for npm provenance
+
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.ORG_GH_TESORIO_APP_ID }}
+          private_key: ${{ secrets.ORG_GH_TESORIO_APP_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "lts/*"
+
       - name: Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           PYPI_TOKEN: "oidc"
         run: |
           npx \
@@ -40,5 +49,6 @@ jobs:
             -p @semantic-release/git \
             -p @semantic-release/changelog \
             semantic-release ${{ github.event_name == 'pull_request' && '--dry-run' || '' }}
+
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
