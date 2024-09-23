@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read # for checkout
@@ -32,4 +35,4 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: npx -p semantic-release@latest semantic-release ${{ github.event_name == 'pull_request' && '--dry-run' }}
