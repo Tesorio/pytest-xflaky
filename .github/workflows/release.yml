@@ -44,6 +44,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           PYPI_TOKEN: "oidc"
+          PIP_BREAK_SYSTEM_PACKAGES: "1"
         run: |
           npx \
             -p semantic-release \
