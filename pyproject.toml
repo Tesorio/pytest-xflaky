@@ -35,3 +35,7 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/Tesorio/pytest-xflaky"
+
+[project.entry-points.pytest11]
+# https://docs.pytest.org/en/latest/how-to/writing_plugins.html#making-your-plugin-installable-by-others
+xflaky = "pytest_xflaky.plugin"
