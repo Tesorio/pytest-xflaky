@@ -35,3 +35,6 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/Tesorio/pytest-xflaky"
+
+[project.entry-points.pytest11]
+xflaky = "pytest_xflaky.plugin"
