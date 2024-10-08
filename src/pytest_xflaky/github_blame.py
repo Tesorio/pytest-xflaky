@@ -9,7 +9,7 @@ class GithubBlame:
         self.token = token
 
     def blame(self, filename, lineno):
-        blame_output = get_blame_output(filename)
+        blame_output = get_blame_output(filename, lineno)
 
         hash_author_map = {}
         line_hash_map = {}
@@ -54,8 +54,10 @@ class GithubBlame:
             return None
 
 
-def get_blame_output(file):
-    return subprocess.check_output(["git", "blame", file, "-p"]).decode("utf-8")
+def get_blame_output(file, lineno):
+    return subprocess.check_output(
+        ["git", "blame", file, "-p", "-L", f"{lineno},{lineno}"]
+    ).decode("utf-8")
 
 
 if __name__ == "__main__":
