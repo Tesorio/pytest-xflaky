@@ -23,16 +23,17 @@ class XflakyAction(enum.Enum):
 @dataclass
 class Test:
     nodeid: str
-    lineno: int
+    faillineno: int
+    testlineno: int
 
     def __str__(self):
-        return f"{self.nodeid}:{self.lineno}"
+        return f"{self.nodeid}:{self.faillineno}"
 
     def __hash__(self):
         return hash(str(self))
 
     def __eq__(self, other):
-        return other.nodeid == self.nodeid and other.lineno == self.lineno
+        return other.nodeid == self.nodeid and other.faillineno == self.faillineno
 
     def get_filename(self):
         if "::" in self.nodeid:
@@ -101,8 +102,8 @@ class GitHubReportWriter:
             data["is_flaky"] = maybe_flaky_test.is_flaky()
             if data["is_flaky"]:
                 filename = maybe_flaky_test.test.get_filename()
-                lineno = maybe_flaky_test.test.lineno
-                data["blame"] = github_blame.blame(filename, lineno)
+                faillineno = maybe_flaky_test.test.faillineno
+                data["blame"] = github_blame.blame(filename, faillineno)
                 if data["blame"]:
                     report_key = data["blame"]["github_username"]
                 else:
@@ -233,8 +234,17 @@ class FlakyTestFinder:
         with open(f"{self.directory}/{filename}") as f:
             data = json.load(f)
             for test in data["tests"]:
+                testlineno = test["lineno"]
+                try:
+                    faillineno = test["call"]["traceback"][0]["lineno"]
+                except (KeyError, IndexError):
+                    faillineno = testlineno
                 yield (
-                    Test(nodeid=test["nodeid"], lineno=test["lineno"]),
+                    Test(
+                        nodeid=test["nodeid"],
+                        testlineno=testlineno,
+                        faillineno=faillineno,
+                    ),
                     test["outcome"] in outcomes,
                 )
 
